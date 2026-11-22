@@ -1,0 +1,149 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Default Effect | SEU332 Research Demo</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#64748b;--accent:#246bce;--accent2:#e8f1ff;--line:#dce4ef;--good:#16845b;--warn:#9a6500}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Arial,sans-serif}
+header{background:#142b4a;color:#fff;padding:28px 18px;text-align:center}header h1{margin:0 0 8px;font-size:clamp(22px,4vw,32px)}header p{margin:0;color:#d9e6f7}
+main{max-width:850px;margin:24px auto;padding:0 14px 50px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 5px 18px #19365b0b}
+h2{font-size:21px;margin:0 0 12px}h3{font-size:17px;margin:0 0 8px}.muted{color:var(--muted);font-size:14px}.pill{display:inline-block;background:var(--accent2);color:var(--accent);border-radius:99px;padding:4px 10px;font-size:12px;font-weight:bold}
+button{border:0;border-radius:10px;background:var(--accent);color:#fff;padding:11px 17px;font-weight:bold;cursor:pointer}button.secondary{background:#e8edf5;color:#24344d}button.danger{background:#a93636}button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.choice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);padding:12px;border-radius:10px;margin:9px 0;cursor:pointer}.choice:has(input:checked){border-color:var(--accent);background:var(--accent2)}input[type=radio]{margin-top:5px}
+.notice{padding:12px;border-radius:10px;background:#fff8e7;color:#624600;font-size:14px}.success{background:#eaf8f1;color:#145c3e}.hidden{display:none!important}
+.progress{height:8px;background:#e8edf5;border-radius:99px;overflow:hidden;margin:14px 0}.progress span{display:block;height:100%;background:var(--accent);width:0}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#f5f8fc;border-radius:12px;padding:14px}.stat strong{display:block;font-size:25px}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{background:#f5f8fc}
+.barrow{display:grid;grid-template-columns:105px 1fr 45px;gap:10px;align-items:center;margin:12px 0;font-size:14px}.bar{height:13px;background:#e8edf5;border-radius:99px;overflow:hidden}.bar span{height:100%;display:block;background:var(--accent)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:550px){.statgrid{grid-template-columns:1fr 1fr}.card{padding:17px}.barrow{grid-template-columns:85px 1fr 38px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Impact of the Default Effect on Human Choices</h1>
+  <p>SEU332 Behavioral Economics · Interactive research prototype</p>
+</header>
+<main>
+  <section id="intro" class="card">
+    <span class="pill">RESPONDENT SURVEY</span>
+    <h2>Welcome</h2>
+    <p>This short activity explores whether a pre-selected option affects the choices people make in everyday situations.</p>
+    <p class="muted">Please answer based on what you would genuinely choose. There are no right or wrong answers. Participation is voluntary.</p>
+    <div class="notice">Demo note: this prototype assigns respondents alternately to two conditions on this device. For a proper study, use a shared random assignment system and obtain your lecturer's approval for the final questions.</div>
+    <div class="actions"><button onclick="startSurvey()">Start questionnaire</button></div>
+  </section>
+
+  <section id="survey" class="card hidden">
+    <div class="muted" id="groupLabel"></div>
+    <div class="progress"><span id="progressFill"></span></div>
+    <div id="questionArea"></div>
+    <div class="actions">
+      <button class="secondary" id="backBtn" onclick="move(-1)">Back</button>
+      <button id="nextBtn" onclick="move(1)">Next</button>
+    </div>
+  </section>
+
+  <section id="thanks" class="card hidden">
+    <h2>Thank you for participating!</h2>
+    <p id="thanksText">Your response has been recorded in this browser.</p>
+    <div class="actions"><button onclick="startSurvey()">Submit another demo response</button><button class="secondary" onclick="showAdmin()">View analysis dashboard</button></div>
+  </section>
+
+  <section id="dashboard" class="card hidden">
+    <span class="pill">RESEARCHER VIEW</span>
+    <h2>Response analysis dashboard</h2>
+    <p class="muted">The dashboard analyses responses saved in this browser only. Responses from other people's devices will not appear here unless you connect a shared database.</p>
+    <div class="statgrid">
+      <div class="stat"><span class="muted">Total responses</span><strong id="total">0</strong></div>
+      <div class="stat"><span class="muted">Default group</span><strong id="countA">0</strong></div>
+      <div class="stat"><span class="muted">No-default group</span><strong id="countB">0</strong></div>
+    </div>
+    <h3 style="margin-top:22px">Choice of default option by condition</h3>
+    <div id="chart"></div>
+    <h3 style="margin-top:22px">Question summary</h3>
+    <div style="overflow-x:auto"><table><thead><tr><th>Scenario</th><th>Default group</th><th>No-default group</th></tr></thead><tbody id="summaryTable"></tbody></table></div>
+    <div class="actions">
+      <button onclick="downloadCSV()">Export responses as CSV</button>
+      <button class="secondary" onclick="refreshDashboard()">Refresh</button>
+      <button class="danger" onclick="clearData()">Clear demo data</button>
+    </div>
+    <p class="muted">Use the exported CSV in Excel to create further tables and charts for your report.</p>
+  </section>
+</main>
+<footer>Prototype for coursework discussion · Do not collect identifiable or sensitive information.</footer>
+<script>
+// DEMO STORAGE: responses are saved only in this browser (localStorage).
+// For a real multi-respondent study, connect this form to Google Sheets,
+// Firebase, Supabase, or another approved shared database.
+const STORAGE_KEY = "seu332_default_effect_demo";
+const ASSIGN_KEY = "seu332_assignment_counter";
+let condition = "A", step = 0, answers = {};
+const questions = [
+ {title:"Scenario 1: App notification settings",prompt:"You install a study-planning app. It asks whether you want to receive promotional notifications. What would you choose?",defaultChoice:"on",options:[["on","Allow promotional notifications"],["off","Do not allow promotional notifications"]],labels:{on:"Allow notifications",off:"Do not allow notifications"}},
+ {title:"Scenario 2: Optional newsletter",prompt:"You are creating an account for an online store. The store asks whether you want to receive its newsletter by email.",defaultChoice:"yes",options:[["yes","Yes, send me the newsletter"],["no","No, thank you"]],labels:{yes:"Subscribe",no:"Do not subscribe"}},
+ {title:"Scenario 3: Website display preference",prompt:"A website lets you choose whether to save your display preference for your next visit.",defaultChoice:"save",options:[["save","Save my preference"],["not_save","Do not save my preference"]],labels:{save:"Save preference",not_save:"Do not save"}}
+];
+function getData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch(e){return []}}
+function saveData(data){localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}
+function startSurvey(){
+  document.getElementById("intro").classList.add("hidden");
+  document.getElementById("thanks").classList.add("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("survey").classList.remove("hidden");
+  // Simple alternating assignment for a local demo; not robust randomisation.
+  let n=Number(localStorage.getItem(ASSIGN_KEY)||0); condition=(n%2===0)?"A":"B";
+  localStorage.setItem(ASSIGN_KEY,String(n+1)); step=0; answers={}; renderQuestion();
+}
+function renderQuestion(){
+  const q=questions[step], isDefault=condition==="A";
+  document.getElementById("groupLabel").textContent=isDefault?"Condition A · A default option is pre-selected":"Condition B · No option is pre-selected";
+  document.getElementById("progressFill").style.width=((step+1)/questions.length*100)+"%";
+  let html=`<h2>${q.title}</h2><p>${q.prompt}</p>`;
+  if(isDefault) html+=`<p class="muted">One option has been pre-selected. You may keep it or change your answer.</p>`;
+  else html+=`<p class="muted">Please select the option you prefer.</p>`;
+  html+=q.options.map(([value,label])=>`<label class="choice"><input type="radio" name="answer" value="${value}" ${answers[step]===value?"checked":(!answers[step]&&isDefault&&q.defaultChoice===value?"checked":"")}> <span>${label}${isDefault&&q.defaultChoice===value?' <span class="pill">DEFAULT</span>':''}</span></label>`).join("");
+  document.getElementById("questionArea").innerHTML=html;
+  document.getElementById("backBtn").disabled=step===0;
+  document.getElementById("nextBtn").textContent=step===questions.length-1?"Submit response":"Next";
+}
+function move(direction){
+  const selected=document.querySelector('input[name="answer"]:checked');
+  if(direction===1&&!selected){alert("Please select an answer before continuing.");return}
+  if(direction===1) answers[step]=selected.value;
+  if(direction===-1 && step>0){step--;renderQuestion();return}
+  if(step<questions.length-1){step++;renderQuestion();return}
+  const record={id:"R"+Date.now(),group:condition,submittedAt:new Date().toISOString(),answers:{...answers}};
+  const data=getData();data.push(record);saveData(data);
+  document.getElementById("survey").classList.add("hidden");
+  document.getElementById("thanks").classList.remove("hidden");
+  document.getElementById("thanksText").textContent="Your response was saved in this browser under Condition "+condition+".";
+}
+function showAdmin(){document.getElementById("intro").classList.add("hidden");document.getElementById("survey").classList.add("hidden");document.getElementById("thanks").classList.add("hidden");document.getElementById("dashboard").classList.remove("hidden");refreshDashboard()}
+function refreshDashboard(){
+ const data=getData(), a=data.filter(x=>x.group==="A"), b=data.filter(x=>x.group==="B");
+ document.getElementById("total").textContent=data.length;document.getElementById("countA").textContent=a.length;document.getElementById("countB").textContent=b.length;
+ const chart=document.getElementById("chart"), rows=[];
+ questions.forEach((q,i)=>{
+  const count=(arr)=>arr.filter(r=>r.answers[i]===q.defaultChoice).length;
+  const pct=(arr)=>arr.length?Math.round(count(arr)/arr.length*100):0;
+  rows.push({name:"Scenario "+(i+1),a:pct(a),b:pct(b),ca:count(a),cb:count(b)});
+ });
+ chart.innerHTML=rows.map(r=>`<div style="margin:14px 0"><strong>${r.name}: selected the default option</strong>${bar("Default group",r.a)}${bar("No-default group",r.b)}</div>`).join("");
+ document.getElementById("summaryTable").innerHTML=rows.map(r=>`<tr><td>${r.name}</td><td>${r.ca}/${a.length} (${r.a}%)</td><td>${r.cb}/${b.length} (${r.b}%)</td></tr>`).join("");
+}
+function bar(label,pct){return `<div class="barrow"><span>${label}</span><div class="bar"><span style="width:${pct}%"></span></div><strong>${pct}%</strong></div>`}
+function downloadCSV(){
+ const data=getData();if(!data.length){alert("There are no responses to export yet.");return}
+ const headers=["Response ID","Submitted at","Group",...questions.map((q,i)=>"Scenario "+(i+1))];
+ const lines=[headers,...data.map(r=>[r.id,r.submittedAt,r.group,...questions.map((q,i)=>q.labels[r.answers[i]]||"")])];
+ const csv=lines.map(row=>row.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\r\n");
+ const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="SEU332_Default_Effect_Responses.csv";a.click();URL.revokeObjectURL(url);
+}
+function clearData(){if(confirm("Delete all demo responses saved in this browser?")){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(ASSIGN_KEY);refreshDashboard()}}
+</script>
+</body>
+</html>
